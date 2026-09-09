@@ -1,96 +1,47 @@
-# AutoTrader Bot
+# AutoTrader Bot — superseded
 
-A Python-based GitHub Actions bot that monitors an AutoTrader.ca search page and notifies you of new listings via Gmail and Twilio SMS — all automatically in the cloud.
+**This repository does not work and is no longer maintained.**
+The working project lives at
+[`iden-f/autotrader_minimal_secrets`](https://github.com/iden-f/autotrader_minimal_secrets).
 
-==============================================================================
+## Why this one was retired
 
-✨ Features
+An audit of both repositories found this one had never successfully run:
 
-- Fully cloud-based: runs on GitHub Actions
-- Sends instant email and SMS notifications for new listings
-- Remembers previously seen listings to prevent duplicates
-- Archives full HTML and images of each listing
-- Commits historical data to your repository for tracking
+- **It pointed at the wrong website.** The code scraped `autotrader.com`
+  (United States) using a `div[data-listing-id]` selector, while the README
+  described `autotrader.ca` (Canada). The two sites share neither markup nor
+  listing ids, so the scraper matched nothing.
+- **It never found a single listing.** `seen_listings.json` is `[]` and
+  `archives/` is empty, across the whole life of the repository. The last
+  commit was 2025-06-24.
+- **Twilio was mandatory.** `load_config()` raised unless all seven
+  environment variables were set, so no SMS account meant no bot at all.
+- **The workflow could not save its results.** It used `actions/checkout@v2`
+  without `permissions: contents: write`, so the `git push` step would have
+  been rejected with a 403 even if the scraper had worked.
+- **Its one test tested nothing.** It stubbed out `requests` *and*
+  `BeautifulSoup`, replacing the parser with a small regex written inside the
+  test file, so it verified the stub rather than the code.
 
-==============================================================================
+The sibling repository, by contrast, targeted `autotrader.ca` correctly and
+archived 50 real listings between June and December 2025. It was the better
+starting point, and it is where the work went.
 
-☁️ Cloud-Only Setup (No Local Installation Needed)
+## What the replacement does
 
-You don’t need to install Python or run anything on your computer. The bot runs entirely in the GitHub Actions environment.
+Same idea, rebuilt: you paste an autotrader.ca search link and it tells you
+about new listings and **price drops** over Telegram, Discord, ntfy, Slack or
+email — all free. It has a dashboard, a settings UI, health alerts when
+scraping breaks, and a test suite that runs against real captured pages.
 
-------------------------------------------------------------------------------
+See its [README](https://github.com/iden-f/autotrader_minimal_secrets#readme).
 
-🔧 Step-by-Step Instructions
+## If you are running this one
 
-1. Create a GitHub Account  
-   Sign up at https://github.com if you don’t already have an account.
+Move to the other repository. Nothing here needs migrating — this bot never
+recorded any listings.
 
-2. Fork This Repository  
-   Click the 'Fork' button at the top-right to create your own copy of this repository.  
-   Your fork will be public by default. If you prefer to keep it private,  
-   go to your forked repository's Settings → General and change the visibility to **Private**.
+## Licence
 
-3. Turn On Gmail 2-Step Verification  
-   1. Visit <https://myaccount.google.com/security>.  
-   2. Under **How you sign in to Google**, click **2-Step Verification**.  
-   3. Follow the prompts (confirm your password, add a phone, etc.) until it shows **On**.
-
-4. Create a Gmail App Password  
-   1. Back on the **Security** page, choose **App passwords** (sign in again if asked).  
-   2. Select **Mail** for the app and name it "AutoTrader Bot".  
-   3. Click **Generate**.  
-   4. Copy the 16-character password Google displays (omit the spaces).  
-   5. You’ll use this code as `GMAIL_APP_PASSWORD` in the next step.
-
-5. Add Repository Secrets  
-   Go to your forked repo’s Settings → Secrets and variables → Actions.  
-   Click 'New repository secret' for each of the following:
-
-   - `SEARCH_URL`         – AutoTrader search results URL  
-   - `GMAIL_USER`         – Gmail address used to send emails  
-   - `GMAIL_APP_PASSWORD` – Gmail app password (use App Passwords, not your login password)  
-   - `TWILIO_SID`         – Twilio Account SID  
-   - `TWILIO_TOKEN`       – Twilio Auth Token  
-   - `TWILIO_FROM`        – Twilio phone number to send from  
-   - `TWILIO_TO`          – Your phone number to receive SMS
-
-   ⚠️ Never commit passwords or .env files to the repository. Use secrets only.  
-   Your `GMAIL_USER` should be the same Gmail account used in steps 3 and 4.  
-   You can send notifications to this address or any other—no additional Gmail  
-   settings are required once the app password is configured.
-
-6. Schedule the Workflow  
-   Open `.github/workflows/run_bot.yml` and edit the `cron:` line to control how often the bot runs (default is every 15 minutes).
-
-   Example (every 15 minutes UTC):
-   schedule:
-     - cron: '*/15 * * * *'
-
-Visit https://crontab.guru for custom schedule formatting.
-
-7. Run It Manually (Optional)  
-Go to the 'Actions' tab → select 'Run AutoTrader Bot' → click 'Run workflow'.
-
-==============================================================================
-
-🏃 What Happens During a Run
-
-- Executes `autotrader_bot.py`  
-- Detects new listings from your `SEARCH_URL`  
-- Sends:  
-- 📧 Email via Gmail  
-- 📱 SMS via Twilio (charges may apply)  
-- Records listing IDs in `seen_listings.json`  
-- Archives each listing under `archives/`, including:  
-- `page.html` – full listing HTML  
-- `image_*.jpg` – all listing images  
-- `metadata.json` – title, URL, and file references
-
-All of this is committed back to your repository automatically.
-
-==============================================================================
-
-📄 License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
+MIT.
